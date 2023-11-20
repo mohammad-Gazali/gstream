@@ -4,6 +4,7 @@ import (
 	"log"
 )
 
+
 func main() {
 	cfg := &Config{
 		ListenAddr: ":3000",
@@ -12,9 +13,11 @@ func main() {
 		},
 	}
 
-	_, err := NewServer(cfg)
+	s, err := NewServer(cfg)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	s.Start()
 }

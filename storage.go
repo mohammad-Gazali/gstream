@@ -7,7 +7,7 @@ import (
 
 type Storer interface {
 	Push([]byte) (int, error)
-	Fetch(int) ([]byte, error)
+	Get(int) ([]byte, error)
 }
 
 type StoreProducerFunc func() Storer
@@ -32,7 +32,7 @@ func (s *MemoryStorage) Push(b []byte) (int, error) {
 	return len(s.data) - 1, nil
 }
 
-func (s *MemoryStorage) Fetch(offset int) ([]byte, error) {
+func (s *MemoryStorage) Get(offset int) ([]byte, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	
