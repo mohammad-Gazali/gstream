@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"sync"
 )
 
 type Message struct {
@@ -11,33 +12,44 @@ type Message struct {
 }
 
 type Config struct {
-	ListenAddr string
+	HTTPListenAddr string
+	WSListenAddr   string
 	StoreProducerFunc
 }
 
 type Server struct {
 	*Config
-	
-	topics    map[string]Storer
+
+	topics map[string]Storer
+
+	mu    sync.RWMutex
+	peers map[Peer]bool
 
 	consumers []Consumer
 	producers []Producer
-	
+
 	producech chan Message
 	quitch    chan struct{}
 }
 
 func NewServer(cfg *Config) (*Server, error) {
 	producech := make(chan Message)
-	return &Server{
+	s := &Server{
 		Config:    cfg,
 		topics:    make(map[string]Storer),
 		quitch:    make(chan struct{}),
 		producech: producech,
 		producers: []Producer{
-			NewHTTPProducer(cfg.ListenAddr, producech),
+			NewHTTPProducer(cfg.HTTPListenAddr, producech),
 		},
-	}, nil
+		mu:    sync.RWMutex{},
+		peers: make(map[Peer]bool),
+		consumers: []Consumer{},
+	}
+
+	s.consumers = append(s.consumers, NewWSConsumer(cfg.WSListenAddr, s))
+
+	return s, nil
 }
 
 func (s *Server) Start() {
@@ -87,4 +99,24 @@ func (s *Server) getStoreForTopic(topic string) Storer {
 		slog.Info("created new topic", "topic", topic)
 	}
 	return s.topics[topic]
+}
+
+func (s *Server) AddPeer(p Peer) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	slog.Info("added new peer", "peer", p)
+	s.peers[p] = true
+}
+
+func (s *Server) AddPeerToTopics(p Peer, topics []string) {
+	// send all the messages from the peer's offset
+	for _, topic := range topics {
+		store := s.getStoreForTopic(topic)
+		// size := store.Len()
+		// for i := 0; i < size; i++ {
+		// 	b, _ := store.Get(i)
+			
+		// }
+	}
+	slog.Info("adding peer to topics", "topics", topics, "peer", p)
 }

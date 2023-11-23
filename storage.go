@@ -8,6 +8,7 @@ import (
 type Storer interface {
 	Push([]byte) (int, error)
 	Get(int) ([]byte, error)
+	// Len() int
 }
 
 type StoreProducerFunc func() Storer
@@ -46,3 +47,9 @@ func (s *MemoryStorage) Get(offset int) ([]byte, error) {
 
 	return s.data[offset], nil
 }
+
+// func (s *MemoryStorage) Len() int {
+// 	s.mu.RLock()
+// 	defer s.mu.RUnlock()
+// 	return len(s.data)
+// }

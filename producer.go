@@ -30,7 +30,7 @@ func (p *HTTPProducer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// publishing case
 	if r.Method == "POST" {
-		if len(parts) != 2 {
+		if len(parts) != 2 && parts[0] == "publish" {
 			slog.Error("invalid action", "path", r.URL.Path)
 			return
 		}
